@@ -106,12 +106,13 @@ DELIMITER ;
   
 Call CreateDataBase();
 /* INSERT STATEMENTS */
-/*
+
 INSERT INTO tblPlayer(`userName`, `email`, `password`, `loginAttempts`, `isLocked`, `isAdministrator`, `isOnline`)
   Values('Sean', 'email1@gmail.com','Password1', 0, false, true, true),
 		('Todd', 'email2@gmail.com', 'Password2', 1, false, false, false),
-        ('Sarah', 'email3@gmail.com', 'Password3', 5, true, false, false);
-*/
+        ('Sarah', 'email3@gmail.com', 'Password3', 5, true, false, false),
+        ('NewUser', 'email4@gmail.com', 'Password4', 5, true, true, true);
+
 INSERT INTO tblMap(`Name`, `xLength`, `yLength`, `xHome`, `yHome`)
 Values('Small', 21, 21, 11, 11),
 	  ('Medium', 41, 41, 21, 21),
@@ -256,18 +257,20 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `RegisterPlayer`(pUserName VARCHAR(20), pEmail VARCHAR(50), pPassword VARCHAR(25))
 BEGIN
 START TRANSACTION;
-  IF EXISTS (SELECT * FROM tblPlayer WHERE UserName = pUserName) THEN
+  IF EXISTS (SELECT `userName` FROM tblPlayer WHERE `userName` = pUserName) THEN
   BEGIN
      SELECT 'UserName is taken' AS MESSAGE;
   END;
-  ELSEIF EXISTS (SELECT * FROM tblPlayer WHERE Email = pEmail) THEN
+  ELSEIF EXISTS (SELECT `email` FROM tblPlayer WHERE `email` = pEmail) THEN
 	BEGIN
 		SELECT 'Email Already used by another account' AS MESSAGE;
 	END;
 	ELSE 
-     INSERT INTO tblPlayer(`UserName`,`Password`,`Email`)
+	 BEGIN
+     INSERT INTO tblPlayer(`UserName`,`email`,`Password`)
      VALUE (pUserName, pEmail, pPassword);
-     SELECT 'Registered User Successfully' AS MESSAGE;
+     SELECT concat('registered ', pUserName) AS MESSAGE;
+     END;
   END IF;
 COMMIT;
 END ;;
@@ -340,9 +343,9 @@ DELIMITER ;
     
 /* Admin Access */
 
-DROP PROCEDURE IF EXISTS AdminAcess;
+DROP PROCEDURE IF EXISTS AdminAccess;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `AdminAcess`(pUserName varchar(20))
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AdminAccess`(pUserName varchar(20))
 BEGIN
 START TRANSACTION;
 	IF EXISTS (SELECT `userName` FROM tblPlayer WHERE `userName` = pUserName AND `isAdministrator` = true) THEN
@@ -373,7 +376,23 @@ ORDER BY `name` DESC;
 END ;;
 DELIMITER ;
 
+/* Admin Deactivate Game */
+DROP PROCEDURE IF EXISTS DeactivateGame;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeactivateGame`(pGameName varchar(20))
+BEGIN
+
+UPDATE tblGame
+SET `gameActive` = false
+WHERE `name` = pGameName;
+
+SELECT concat('deactivated game: ',pGameName) AS MESSAGE;
+ 
+ END ;;
+DELIMITER ;
+
 /* Admin list all players */
+
 DROP PROCEDURE IF EXISTS GetAllPlayers;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllPlayers`()
@@ -395,7 +414,7 @@ START TRANSACTION;
 	
 IF EXISTS(SELECT `userName` FROM tblPlayer WHERE `userName` = pUserName) THEN
 	BEGIN
-	IF EXISTS(SELECT `Email` FROM tblPlayer WHERE `Email` = pNewEmail) THEN
+	IF EXISTS(SELECT `Email` FROM tblPlayer WHERE `Email` = pNewEmail AND `userName` <> pUserName) THEN
 	BEGIN
 		SELECT concat('Email ', pNewEmail, " Already used by another account") AS MESSAGE;
 	END;
@@ -549,7 +568,7 @@ IF NOT EXISTS(SELECT `name` FROM tblGame WHERE `name` = pGameName) THEN
 			SET `isVisible` = 1
 			WHERE (`xValue` = lcXCount) AND (`yValue` = lcYCount);
 			
-			SELECT 'Created Game' AS MESSAGE;
+			SELECT concat('Created Game ', pGameName) AS MESSAGE;
 			
 			
 		ELSE
@@ -677,11 +696,11 @@ IF ((ABS(lcCurrentTileX-pXValue) <= 1) AND (ABS(lcCurrentTileY-pYValue) <= 1)) T
 				 
 				  END IF;
 
-	 SELECT concat(pPlayerName, 'Moved successfully') AS MESSAGE;
+	 SELECT concat(pPlayerName, ' Moved successfully') AS MESSAGE;
      
-	/*If moveing to same tile player is active on picks up items on tile */
-	ELSEIF EXISTS(SELECT `GameName`, `TileXValue`, `TileYValue`, `isActive` FROM tblGamePlayer
-				  WHERE ((`isActive` = true) AND (`gameName` = pGameName)) AND `tileXValue` = pXValue AND `tileYValue` = pYValue) THEN
+	/*If moving to same tile player is active on picks up items on tile */
+	ELSEIF EXISTS(SELECT `GameName`,`userName` `TileXValue`, `TileYValue`, `isActive` FROM tblGamePlayer
+				  WHERE ((`isActive` = true) AND (`gameName` = pGameName)) AND `userName` = pPlayerName AND `tileXValue` = pXValue AND `tileYValue` = pYValue) THEN
                   
 		INSERT INTO tblPlayerItem(`userName`, `gameName`, `itemName`)
 		SELECT pPlayerName, `gameName`, `itemName` FROM tblTileItem
@@ -692,15 +711,15 @@ IF ((ABS(lcCurrentTileX-pXValue) <= 1) AND (ABS(lcCurrentTileY-pYValue) <= 1)) T
 		DELETE FROM tblTileItem
 		WHERE `xValue` = pXValue AND `yValue` = pYValue AND `gameName` = pGameName;
 		
-		SELECT 'Attempted to pick up item' AS MESSAGE;				 
+		SELECT ' Attempted to pick up item' AS MESSAGE;				 
 				  
 	ELSE
 		/* Returns tile is occupied and doesn't update gameplayers tile */
-			SELECT 'Tile occupied' AS MESSAGE;
+			SELECT ' Tile occupied' AS MESSAGE;
 	END IF;
 
 ELSE
-	SELECT 'Tile Not Adjacent' AS MESSAGE;
+	SELECT ' Tile Not Adjacent' AS MESSAGE;
 END IF;
 COMMIT;
 END;;
@@ -722,6 +741,17 @@ SELECT concat(pPlayerName, ' Has left the game') AS MESSAGE;
 END ;;
 DELIMITER ;
 
+/*Get Item List*/
+
+DROP PROCEDURE IF EXISTS GetItems;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetItems`(pPlayerName VARCHAR(20), pGameName VARCHAR(50))
+BEGIN
+SELECT `itemName`, `quantity` FROM tblPlayerItem  AS MESSAGE
+WHERE `userName` = pPlayerName AND `gameName` = pGameName;
+END;;
+DELIMITER ;
+
 /* Use Item */
 
 DROP PROCEDURE IF EXISTS ConsumeItem;
@@ -732,23 +762,29 @@ BEGIN
 DECLARE lcxValue integer;
 DECLARE lcyValue integer;
 
-SELECT `TilexValue`, `TileYValue` FROM tblGamePlayer WHERE `gameName` = pGameName INTO lcXValue, lcYValue;
+SELECT `TilexValue`, `TileYValue` FROM tblGamePlayer WHERE `gameName` = pGameName AND `userName` = pPlayerName INTO lcXValue, lcYValue;
 
 IF((SELECT `isActive` FROM tblGamePlayer WHERE `gameName` = pGameName AND `userName` = pPlayerName) = true) THEN
 	 IF EXISTS(SELECT * FROM tblPlayerItem WHERE `userName` = pPlayerName AND `gameName` = pGameName AND `itemName` = pItemName AND `quantity` >= 1) THEN
 		  CASE
 		  WHEN pItemName = 'Binoculars' THEN
+			BEGIN
 				/* Uncovers Tiles */
 				UPDATE tblTile	
 				SET `isVisible` = true
 				WHERE ((`xvalue` = lcXValue OR `xvalue`= lcXValue+1 OR `xvalue`= lcXValue-1) AND (`yvalue` = lcYValue OR `yvalue` = lcYValue+1 OR `yvalue`= lcYValue-1)
                 AND `gameName` = pGameName);
-                
+			END;
 		  WHEN pItemName = 'Gold' THEN
+           /* adds score */
+			BEGIN
 				UPDATE tblGamePlayer
 				SET `Score` = `Score`+10
 				WHERE `gameName` = pGameName AND `userName` = pPlayerName;
+			END;
 		  WHEN pItemName = 'Club' THEN
+			/* steals score and adds */
+			BEGIN
 				UPDATE tblGamePlayer
 				SET `Score` = `Score`-5
 				WHERE `gameName` = pGameName AND isActive = true;
@@ -756,14 +792,15 @@ IF((SELECT `isActive` FROM tblGamePlayer WHERE `gameName` = pGameName AND `userN
 				UPDATE tblGamePlayer
 				SET `Score` = `Score`+10
 				WHERE `gameName` = pGameName AND `userName` = pPlayerName;
-			
+			END;
 
 		  END CASE;
 		  /* removes 1 quantity of item from inventory */
+          BEGIN
 		  UPDATE tblPlayerItem
 		  SET `quantity` = `quantity`-1
 		  WHERE `userName` = pPlayerName AND `gameName` = pGameName AND `itemName` = pItemName;
-          
+          END;
           SELECT concat('used ', pItemName) AS MESSAGE;
 
 	ELSE
@@ -786,7 +823,7 @@ BEGIN
 INSERT INTO tblChat(`userName`, `text`)
 VALUES(puserName, pText);
 
-SELECT concat('sent ', pText, ' as message from', pUserName) AS MESSAGE;
+SELECT concat('sent ', pText, ' as message from ', pUserName) AS MESSAGE;
 
 END ;;
 DELIMITER ;
@@ -809,6 +846,7 @@ DELIMITER ;
 
 
 /* list Online players */
+
 DROP PROCEDURE IF EXISTS GetOnlinePlayers;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetOnlinePlayers`()
@@ -849,54 +887,143 @@ ORDER BY `userName` DESC;
 END ;;
 DELIMITER ;
 
-/* TEST DATA */
+/* TEST DATA RUN PREVIOUS STATEMENTS IF TESTING INDIVIDUALLY */
 
-INSERT INTO tblPlayer(`userName`, `email`, `password`, `loginAttempts`, `isLocked`, `isAdministrator`, `isOnline`)
-  Values('Sean', 'email1@gmail.com','Password1', 0, false, true, true),
-		('Todd', 'email2@gmail.com', 'Password2', 1, false, false, false),
-        ('NewUser', 'email5@gmail.com', 'Passwordd', 1, false, false, true),
-        ('Sarah', 'email3@gmail.com', 'Password3', 5, true, false, true);
+/*registering user */
+
+/*success*/
+Call RegisterPlayer('New', 'Newemail1@gmail.com','Password1');
+/*Email in use */
+Call RegisterPlayer('Bobza', 'Newemail1@gmail.com','Password');
+/*UserName in use */
+Call RegisterPlayer('New', 'Newemail2@gmail.com','Password');
+
+/*Finding a player */
+/*Exists */
+Call FindPlayer('Sean');
+/* Doesn't Exist */
+Call FindPlayer('Jones');
+
+/*Logging in*/
+/*Successful login */
+Call LoginPlayer('New', 'Password1');
+/*Wrong password do 5 times for lock 6th attempt will display admin email*/
+Call LoginPlayer('New', 'wrong');
+Call LoginPlayer('New', 'wrong');
+Call LoginPlayer('New', 'wrong');
+Call LoginPlayer('New', 'wrong');
+Call LoginPlayer('New', 'wrong');
+Call LoginPlayer('New', 'wrong');
+/*No user exists*/
+Call LoginPlayer('Random', 'Password');
+
+/*Logout Player*/
+Call LogoutPlayer('New');
+
+/*Get online Players */
+Call GetOnlinePlayers();
+
+/* Game Creation */
+/*Success small*/
+Call CreateGame("This Is Game1", "small");
+/*Success Medium*/
+Call CreateGame("This Is Game2", "medium");
+/*Success Large*/
+Call CreateGame("This Is Game3", "large");
+/*Already Exists*/
+Call CreateGame("This Is Game1", "small");
+/*Invalid Map*/
+Call CreateGame("This Game", "smalsl");
+
+/*Find Game */
+call GetActiveGames();
+
+/*Join Game */
+/*First Join*/
+Call JoinGame('Sean', 'This Is Game1');
+Call JoinGame('Todd', 'This Is Game1');
+Call JoinGame('Sarah', 'This Is Game1');
+Call JoinGame('NewUser', 'This is Game2');
+/*Rejoin*/
+Call JoinGame('Sean', 'This Is Game1');
+
+/*Move players*/
+Call MovePlayer('Sean', 'This Is Game1', 10, 12);
+/* pick up item(s) on tile */
+Call MovePlayer('Sean', 'This Is Game1', 10, 12);
+/*Try to move to occupied tile*/
+Call MovePlayer('Todd', 'This Is Game1', 10, 12);
+/*try to move to a non-adjacent tile*/
+Call MovePlayer('Sarah', 'This Is Game1', 10, 13);
+/*Get list of active game players */
+Call GetGamePlayers('This Is Game1');
+
+/*leave game */
+Call LeaveGame('Sean', 'This Is Game1');
+/*Check if player can move to now unoccupied tile */
+Call MovePlayer('Todd', 'This Is Game1', 10, 12);
+
+/* get active game players(Note. Player is not active until they make a move if they're on home/occupied tile) */
+call GetGamePlayers('This Is Game1');
+
+/*Get Item List*/
+/* inserting data so I don't have to move around map)(side note player must be active to use items)*/
+INSERT INTO tblPlayerItem(`userName`, `gameName`, `itemName`, `quantity`)
+  Values('Todd', 'This Is Game1', 'Binoculars', 1),
+		('Todd', 'This Is Game1', 'Gold', 5),
+		('Todd', 'This Is Game1', 'Club', 10)
+        ON DUPLICATE KEY UPDATE `quantity` = `quantity`+1;
+
+call GetItems('Todd', 'This Is Game1');
+
+/* use item */
         
+call ConsumeItem('Todd', 'This Is Game1', 'Binoculars');
+call ConsumeItem('Todd', 'This Is Game1', 'Gold');
+call ConsumeItem('Todd', 'This Is Game1', 'Club');
 
-Call CreateGame("New", "Medium");
-Call CreateGame("New2", "Small");
-Call CreateGame("New3", "Large");
+
+/* Chat */
+call SendMessage('Sean', 'Hello :)');
+call SendMessage('Sean', 'this wont show');
+call SendMessage('Todd', 'hello 2');
+call SendMessage('Sean', 'hello1');
+call SendMessage('Sean', 'hello2');
+call SendMessage('Sean', 'hello3');
+call SendMessage('Sean', 'hello4');
+call SendMessage('NewUser', 'hello5');
+call SendMessage('Sarah', 'hello6');
+call SendMessage('Sean', 'hello7');
+call SendMessage('Sean', 'hello8');
+call SendMessage('Sean', 'hello9');
+call SendMessage('Sean', 'Most Recent Message');
+
+/*Read Chat*/
+call GetChat();
 
 UPDATE tblGame
 SET `gameActive` = false
 WHERE `name` ='New3';
 
+/* Admin Functions */
 
-Call JoinGame('Sean', 'New');
-Call JoinGame('Todd', 'New');
-Call JoinGame('Sarah', 'New');
-Call JoinGame('Sean', 'New2');
-Call JoinGame('NewUser', 'New2');
-        
-UPDATE tblGamePlayer
-SET `isActive` = true
-WHERE `gameName` ='New2';
+/*test admin access */
+/*Admin*/
+Call AdminAccess('Sean');
+/*Not Admin*/
+Call AdminAccess('New');
 
+/* Get all players */
+call GetAllGames();
 
-INSERT INTO tblChat(`userName`, `text`)
-  Values('Sean', 'this wont show'),
-		('Todd', 'hello 2'),
-        ('Sean', 'hello1'),
-        ('Sean', 'hello2'),
-        ('Sean', 'hello3'),
-        ('Sean', 'hello4'),
-        ('NewUser', 'hello5'),
-        ('Sarah', 'hello6'),
-        ('Sean', 'hello7'),
-        ('Sean', 'hello8'),
-        ('Sean', 'hello9'),
-        ('Sean', 'Most Recent Message');
-	
-INSERT INTO tblPlayerItem(`userName`, `gameName`, `itemName`, `quantity`)
-  Values('Sean', 'New', 'Binoculars', 10),
-		('Todd','New', 'Gold', 1),
-        ('Sarah','New', 'Club', 1),
-        ('Sean', 'New2', 'Binoculars', 5);
+/*Get all games */
+call GetAllPlayers();
+
+/* Edit user */
+call EditPlayer('New', 'New', 'Newemail1@gmail.com', 'Password1', true, false);
+
+/*Delete user*/
+call DeletePlayer('New');
 
 
 	
