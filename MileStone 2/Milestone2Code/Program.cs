@@ -28,13 +28,6 @@ namespace Milestone2Code
             Console.WriteLine(aTest.RegisterPlayer("hi", "myname", "jeff"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
-            
-            // Tests Logging in Procedure.
-            Console.WriteLine("Testing Login Player");
-            Console.WriteLine("===============================================");
-            Console.WriteLine(aTest.LoginPlayer("Sean", "Passwodrd1"));
-            Console.WriteLine("----------------------------------------------");
-            Console.WriteLine("===============================================");
 
             //Tests Logout
             Console.WriteLine("Testing Logout Player");
@@ -42,6 +35,14 @@ namespace Milestone2Code
             Console.WriteLine(aTest.LogoutPlayer("Sean"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
+
+            // Tests Logging in Procedure.
+            Console.WriteLine("Testing Login Player");
+            Console.WriteLine("===============================================");
+            Console.WriteLine(aTest.LoginPlayer("Sean", "Password1"));
+            Console.WriteLine("----------------------------------------------");
+            Console.WriteLine("===============================================");
+
 
             //Tests Users Admin Acess
             Console.WriteLine("Testing Admin Access");
@@ -53,7 +54,7 @@ namespace Milestone2Code
             //Tests Editing Player
             Console.WriteLine("Testing Edit Player");
             Console.WriteLine("===============================================");
-            Console.WriteLine(aTest.EditPlayer("Todd", "Toddles", "NewEmail@gmail.com", "Password4", true, true));
+            Console.WriteLine(aTest.EditPlayer("Sean", "Sean", "NewEmail@gmail.com", "Password4", true, true));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
@@ -63,8 +64,6 @@ namespace Milestone2Code
             Console.WriteLine(aTest.DeletePlayer("Sarah"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
-
-            
 
             //Tests Creating Game
             Console.WriteLine("Testing Creating Game");
@@ -76,26 +75,49 @@ namespace Milestone2Code
             //Tests Joining Game
             Console.WriteLine("Testing Joining Game");
             Console.WriteLine("===============================================");
-            Console.WriteLine(aTest.JoinGame("Todd", "NewGame"));
+            Console.WriteLine(aTest.JoinGame("Sean", "NewGame"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
             //Tests Move In Game
             Console.WriteLine("Testing Moving In Game");
             Console.WriteLine("===============================================");
-            Console.WriteLine(aTest.MovePlayer("Todd", "NewGame", 11, 12));
+            Console.WriteLine(aTest.MovePlayer("Sean", "NewGame", 10, 10));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
-            //Tests Using Item in Game
-            Console.WriteLine("Testing Leaving In Game");
+            //Tests Get Players Active In Game
+            Console.WriteLine("Testing Getting Active Game Players");
             Console.WriteLine("===============================================");
-            Console.WriteLine(aTest.ConsumeItem("Sean", "seans game", "Gold"));
+            var GamePlayers = aTest.GetGamePlayers("NewGame");
+            foreach (DataRow aRow in GamePlayers.Tables[0].Rows)
+            {
+                Console.WriteLine(aRow["userName"]);
+            }
+            Console.WriteLine("----------------------------------------------");
+            Console.WriteLine("===============================================");
+
+            //Tests getting item list in Game
+            Console.WriteLine("Testing Getting item list");
+            Console.WriteLine("===============================================");
+            var Items = (aTest.GetItems("Sean", "NewGame"));
+            foreach (DataRow aRow in Items.Tables[0].Rows)
+            {
+                Console.WriteLine(aRow["name"]);
+            }
+            Console.WriteLine("----------------------------------------------");
+            Console.WriteLine("===============================================");
+
+
+            //Tests Using Item in Game
+            Console.WriteLine("Testing Using Item In Game");
+            Console.WriteLine("===============================================");
+            Console.WriteLine(aTest.ConsumeItem("Sean", "NewGame", "Gold"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
             //Tests Leaving Game
-            Console.WriteLine("Testing Leaving In Game");
+            Console.WriteLine("Testing Leaving Game");
             Console.WriteLine("===============================================");
             Console.WriteLine(aTest.LeaveGame("Sean", "NewGame"));
             Console.WriteLine("----------------------------------------------");
@@ -105,6 +127,13 @@ namespace Milestone2Code
             Console.WriteLine("Testing Delete Game");
             Console.WriteLine("===============================================");
             Console.WriteLine(aTest.DeleteGame("New"));
+            Console.WriteLine("----------------------------------------------");
+            Console.WriteLine("===============================================");
+
+            //Tests Deactivating Game
+            Console.WriteLine("Testing Deactivating Game");
+            Console.WriteLine("===============================================");
+            Console.WriteLine(aTest.DeactivateGame("This Is Game3"));
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
@@ -172,16 +201,7 @@ namespace Milestone2Code
             Console.WriteLine("----------------------------------------------");
             Console.WriteLine("===============================================");
 
-            //Tests Get Players Active In Game
-            Console.WriteLine("Testing Getting Active Game Players");
-            Console.WriteLine("===============================================");
-            var GamePlayers = aTest.GetGamePlayers("New2");
-            foreach (DataRow aRow in GamePlayers.Tables[0].Rows)
-            {
-                Console.WriteLine(aRow["userName"]);
-            }
-            Console.WriteLine("----------------------------------------------");
-            Console.WriteLine("===============================================");
+           
 
 
         }

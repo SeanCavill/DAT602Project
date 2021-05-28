@@ -13,7 +13,7 @@ namespace Milestone2Code
         private static string connectionString
         {
             //NOTE PASSWORD NOT SET TO ANYTHING ATM
-            get { return "Server=localhost;Port=3306;Database=DAT602SeanCavill;Uid=root;password=password;"; }
+            get { return "Server=localhost;Port=3306;Database=DAT602SeanCavill;Uid=root;password=Hilltops06;"; }
 
         }
 
@@ -126,7 +126,7 @@ namespace Milestone2Code
             parUserName.Value = pUserName;
 
 
-            var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call AdminAcess(@UserName)", parUserName);
+            var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call AdminAccess(@UserName)", parUserName);
 
             return (aDataSet.Tables[0].Rows[0])["MESSAGE"].ToString();
         }
@@ -183,6 +183,18 @@ namespace Milestone2Code
             parGameName.Value = pGameName;
 
             var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call DeleteGame(@GameName)", parGameName);
+
+            return (aDataSet.Tables[0].Rows[0])["MESSAGE"].ToString();
+        }
+
+        //deactiavates game
+        public String DeactivateGame(string pGameName)
+        {
+            var parGameName = new MySqlParameter("@GameName", MySqlDbType.VarChar, 20);
+
+            parGameName.Value = pGameName;
+
+            var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call DeactivateGame(@GameName)", parGameName);
 
             return (aDataSet.Tables[0].Rows[0])["MESSAGE"].ToString();
         }
@@ -364,6 +376,23 @@ namespace Milestone2Code
             parGameName.Value = pGameName;
 
             var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call GetGamePlayers(@GameName)", parGameName);
+
+            return aDataSet;
+        }
+
+        public DataSet GetItems(string pPlayerName, string pGameName)
+        {
+            List<MySqlParameter> parList = new List<MySqlParameter>();
+            var parPlayerName = new MySqlParameter("@UserName", MySqlDbType.VarChar, 20);
+            var parGameName = new MySqlParameter("@GameName", MySqlDbType.VarChar, 20);
+
+            parPlayerName.Value = pPlayerName;
+            parGameName.Value = pGameName;
+
+            parList.Add(parPlayerName);
+            parList.Add(parGameName);
+
+            var aDataSet = MySqlHelper.ExecuteDataset(mySqlConnection, "Call GetItems(@UserName, @GameName)", parList.ToArray());
 
             return aDataSet;
         }
