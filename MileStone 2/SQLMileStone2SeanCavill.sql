@@ -8,9 +8,9 @@ CREATE PROCEDURE CreateDataBase()
 	BEGIN
 
 	CREATE TABLE tblplayer (
-	  `userName`      varchar(20) PRIMARY KEY, 
-	  `email`			varchar(50) UNIQUE NOT NULL,
-	  `password`      varchar(20),
+	  `userName` varchar(20) PRIMARY KEY, 
+	  `email` varchar(50) UNIQUE NOT NULL,
+	  `password` varchar(20),
 	  `loginAttempts` int(1) NOT NULL DEFAULT 0,
 	  `isLocked`  bit(1) NOT NULL DEFAULT FALSE, 
 	  `isAdministrator` bit(1) NOT NULL DEFAULT FALSE, 
