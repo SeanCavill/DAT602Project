@@ -1,4 +1,4 @@
 # DAT602Project
 
 
-Password in test class will need to be set to MYSQL workbench pw
+Password in DBACCESS class will need to be set to MYSQL workbench pw
