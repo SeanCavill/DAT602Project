@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "E7iVlre0WH3/e5G2KA1iCS7pO5M6l1fP4gNFPCCbo/ArDL060F1/6KGWPsRkrdgkze+dY7cX+uWYwvv1GirYuQ==",
+  "dgSpecHash": "mP4Jod3NBFDah3JAFVCIC2t9mIhtVnf42pFoUCP2wOI2W8QKEVZkCbt3XE0pWQ7yTV6raB6wHXbwNXSMDqeFZQ==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Blue\\source\\repos\\Milestone2Code\\Milestone2Code\\Milestone2Code.csproj",
+  "projectFilePath": "C:\\Users\\Blue\\DAT602Project\\MileStone 2\\Milestone2Code\\Milestone2Code.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Blue\\.nuget\\packages\\bouncycastle.netcore\\1.8.5\\bouncycastle.netcore.1.8.5.nupkg.sha512",
     "C:\\Users\\Blue\\.nuget\\packages\\google.protobuf\\3.14.0\\google.protobuf.3.14.0.nupkg.sha512",
